@@ -3,13 +3,29 @@
 2. Create, Read, dan Update data login user pada tabel MSTblUserLogin
 3. Create, Read, Update, Delete user dari kendaraan pada tabel JNTblFriendGroupData
 """
-from flask import Flask, request, json
+from flask import Flask, request, json, g, session
+from flask_session import Session
 from LoginClass import LoginClass
-from UserClass import UserClass
-from jsonschema import validate
+from UserClass import UserClass, UserExist, UserNotFound
 import sqlite3
 app = Flask(__name__)
-sqlite3Conn = sqlite3.connect("main.db")
+SESSION_PERMANENT = False
+SESSION_TYPE = 'filesystem'
+app.config.from_object(__name__)
+DATABASE = 'test.db'
+Session(app)
+
+def get_db():
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+    return db
+
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close()
 
 @app.route('/')
 def index():
@@ -21,22 +37,35 @@ def index():
 def postMessageVehicle():
     return 'Hello, World'
 
-# Post API for CRU on user entity
+# Post API for CRU on login entity
 # Current feature : signup, signin, edit
 # Requirement : 
+@app.route('/loginOps',methods = ['POST'])
+def postMessageLogin():
+    try:
+        loginObj = LoginClass(get_db())
+        loginObj.storeUserPass(request.get_json(force=True))
+        if loginObj.intent.lower() == "login":
+            loginObj.authUserPass()
+            session['uid'] = loginObj.UID
+        elif loginObj.intent.lower() == "signup":
+            loginObj.newUserCreation()
+        return json.dumps({"success": True, "msg": loginObj.latest_response})
+    except UserNotFound or UserExist as e:
+        return json.dumps({"success": False, "msg": e.error})
+
 @app.route('/userOps',methods = ['POST'])
 def postMessageUser():
-    try:
-        dataObj: LoginClass =  json.loads(request.data, object_hook=LoginClass)
-        if dataObj.intent.lower() == "signin":
-            dataUser: UserClass = UserClass(dataObj.authUserPass(sqlite3Conn))
-            return dataUser.uid()
-        elif dataObj.intent.lower() == "login":
-            pass
-        elif dataObj.intent.lower() == "edit":
-            pass 
-    except AttributeError as e:
-        return repr(e)
+    test = session.get('uid',None)
+    if test is not None:
+        user = UserClass(get_db(),session.get('key'))
+        try:
+            user.storeRequestData(request.get_json(force=True))
+            return "non"
+        except:
+            return json.dumps({"success": False, "msg": ""}),403    
+    else:
+        return json.dumps({"success": False, "msg": "No users over here, login first"}),403
 
 # Post API for CRU on group entity
 # Current feature : add user to group, delete user from group
@@ -52,4 +81,3 @@ def postMessageGroup():
 @app.route('/packedUserSummary',methods = ['POST'])
 def getPackedUserSummary():
     return 'Hello, World'
-

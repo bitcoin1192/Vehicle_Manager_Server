@@ -1,0 +1,4 @@
+test.db
+flask_session
+.vscode/
+__pycache__/
