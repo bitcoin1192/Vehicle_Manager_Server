@@ -3,10 +3,13 @@
 2. Create, Read, dan Update data login user pada tabel MSTblUserLogin
 3. Create, Read, Update, Delete user dari kendaraan pada tabel JNTblFriendGroupData
 """
+from cmath import e
+from distutils.log import error
+from tkinter import E
 from flask import Flask, request, json, g, session
 from flask_session import Session
 from LoginClass import LoginClass
-from UserClass import UserClass, UserExist, UserNotFound
+from UserClass import UserClass, UserExist, UserNotFound, ColumnNotExist
 import sqlite3
 app = Flask(__name__)
 SESSION_PERMANENT = False
@@ -58,12 +61,12 @@ def postMessageLogin():
 def postMessageUser():
     test = session.get('uid',None)
     if test is not None:
-        user = UserClass(get_db(),session.get('key'))
+        user = UserClass(get_db(),session.get('uid'))
         try:
             user.storeRequestData(request.get_json(force=True))
-            return "non"
-        except:
-            return json.dumps({"success": False, "msg": ""}),403    
+            return json.dumps({"success": True, "msg": user.latest_response})
+        except (sqlite3.Error,ColumnNotExist) as emm:    
+            return json.dumps({"success": False, "msg": emm.args}),403    
     else:
         return json.dumps({"success": False, "msg": "No users over here, login first"}),403
 
