@@ -1,5 +1,6 @@
 from asyncio.windows_events import NULL
 import sqlite3
+from tkinter import E
 from types import NoneType
 
 class UserClass:
@@ -10,6 +11,7 @@ class UserClass:
             "changeData" : {"type" : "string"}
         }
     }
+    latest_response = None
     def __init__(self, conn: sqlite3.Connection, uid):
         self.sqlConn = conn
         self.uid = uid
@@ -19,19 +21,26 @@ class UserClass:
         self.changeData = msg["changeData"]
         if self.intent and self.changeData is not None:
             if self.intent == "edit":
-                pass
-            elif self.intent == "":
+                self.editUserData()
+            elif self.intent == "updateFace":
                 pass
         else:
             raise InputIncomplete
-        
-    def addFriend(self):
-        pass
-    def removeFriend(self):
-        pass
+    
     def editUserData(self):
-        pass
-    def uploadFaceSignature(self):
+        sqlCursor = self.sqlConn.cursor()
+        for varname in self.changeData:
+            if varname == "password":
+                sqlCursor.execute("UPDATE MSTblUserLogin SET password=:password WHERE UID=:user",{"user": self.uid, "password": self.changeData[varname]})
+                self.sqlConn.commit()
+                self.latest_response = varname + " has been changed"
+            else:
+                raise ColumnNotExist("Key doesn't correspond to known column")
+            #    print(e)
+            
+        #self.sqlConn.commit()
+    
+    def storeFaceSignature(self):
         pass
 
 class UserNotFound(Exception):
@@ -48,3 +57,8 @@ class InputIncomplete(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
         self.error = "Input is missing from request data"
+
+class ColumnNotExist(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+        self.error = args[0]
