@@ -8,6 +8,7 @@ from distutils.log import error
 from tkinter import E
 from flask import Flask, request, json, g, session
 from flask_session import Session
+from GroupClass import GroupClass
 from LoginClass import LoginClass
 from UserClass import UserClass, UserExist, UserNotFound, ColumnNotExist
 import sqlite3
@@ -54,7 +55,7 @@ def postMessageLogin():
         elif loginObj.intent.lower() == "signup":
             loginObj.newUserCreation()
         return json.dumps({"success": True, "msg": loginObj.latest_response})
-    except UserNotFound or UserExist as e:
+    except (UserNotFound,UserExist) as e:
         return json.dumps({"success": False, "msg": e.error})
 
 @app.route('/userOps',methods = ['POST'])
@@ -75,12 +76,24 @@ def postMessageUser():
 # Requirement : UID and VID
 @app.route('/groupOps',methods = ['POST'])
 def postMessageGroup():
-    return 'Hello, World'
+    test = session.get('uid',None)
+    if test is not None:
+        try:
+            groupOwner = GroupClass(get_db(),session.get('uid'),request.get_json(force=True))
+            groupOwner.intentReader()
+            return json.dumps({"success": True, "msg": groupOwner.latest_response})
+        except (UnknownIntent,UserNotFound) as e:
+            return json.dumps({"success": False, "msg": e.error}),403
+
 
 # Post API for fetching packed user summary that contain
-# FingerData and it's UID Owner. return file contain structured byte data
-# Current feature : add user to group, delete user from group
+# TrainedNN and it's UID Owner. return file contain structured byte data
 # Requirement : UID and VID
 @app.route('/packedUserSummary',methods = ['POST'])
 def getPackedUserSummary():
     return 'Hello, World'
+
+class UnknownIntent(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+        self.error = args[0]
