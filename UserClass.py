@@ -1,4 +1,5 @@
 from asyncio.windows_events import NULL
+from main import UnknownIntent
 import sqlite3
 from tkinter import E
 from types import NoneType
@@ -24,6 +25,8 @@ class UserClass:
                 self.editUserData()
             elif self.intent == "updateFace":
                 pass
+            else:
+                raise UnknownIntent(self.intent+" is not handle yet!")
         else:
             raise InputIncomplete
     
