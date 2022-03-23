@@ -11,6 +11,7 @@ from flask_session import Session
 from GroupClass import GroupClass
 from LoginClass import LoginClass
 from UserClass import UserClass, UserExist, UserNotFound, ColumnNotExist
+from ControllerException import UnknownIntent
 import sqlite3
 app = Flask(__name__)
 SESSION_PERMANENT = False
@@ -92,8 +93,3 @@ def postMessageGroup():
 @app.route('/packedUserSummary',methods = ['POST'])
 def getPackedUserSummary():
     return 'Hello, World'
-
-class UnknownIntent(Exception):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
-        self.error = args[0]
