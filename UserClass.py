@@ -1,5 +1,5 @@
 from asyncio.windows_events import NULL
-from main import UnknownIntent
+from ControllerException import UnknownIntent
 import sqlite3
 from tkinter import E
 from types import NoneType
@@ -34,7 +34,10 @@ class UserClass:
         sqlCursor = self.sqlConn.cursor()
         for varname in self.changeData:
             if varname == "password":
-                sqlCursor.execute("UPDATE MSTblUserLogin SET password=:password WHERE UID=:user",{"user": self.uid, "password": self.changeData[varname]})
+                sqlCursor.execute("""UPDATE MSTblUserLogin 
+                                    SET password=:password 
+                                    WHERE UID=:user""",
+                                    {"user": self.uid, "password": self.changeData[varname]})
                 self.sqlConn.commit()
                 self.latest_response = varname + " has been changed"
             else:
