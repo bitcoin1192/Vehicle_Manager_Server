@@ -35,6 +35,7 @@ class GroupClass:
                                  {"GID": self.groupID,"VID":VID,"UIDMember":UIDMember})
         except sqlite3.IntegrityError as e:
             raise UserNotFound("UIDMember is not found")
+            
     def removeFriend(self, UIDMember):
         try:
             self.curr.execute("""DELETE FROM TRGIDMember

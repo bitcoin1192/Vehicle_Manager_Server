@@ -2,3 +2,4 @@ test.db
 flask_session
 .vscode/
 __pycache__/
+faceSignature/
