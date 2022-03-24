@@ -1,8 +1,9 @@
 from asyncio.windows_events import NULL
+from fileinput import filename
+from uuid import uuid4
 from ControllerException import UnknownIntent
 import sqlite3
-from tkinter import E
-from types import NoneType
+import os
 
 class UserClass:
     jsonSchema = {
@@ -23,8 +24,8 @@ class UserClass:
         if self.intent and self.changeData is not None:
             if self.intent == "edit":
                 self.editUserData()
-            elif self.intent == "updateFace":
-                pass
+            elif self.intent == "storeFace":
+                self.storeFaceSignature()
             else:
                 raise UnknownIntent(self.intent+" is not handle yet!")
         else:
@@ -32,22 +33,43 @@ class UserClass:
     
     def editUserData(self):
         sqlCursor = self.sqlConn.cursor()
-        for varname in self.changeData:
+        proc_column = ""
+        for varname in self.changeData[0]:
             if varname == "password":
                 sqlCursor.execute("""UPDATE MSTblUserLogin 
                                     SET password=:password 
                                     WHERE UID=:user""",
-                                    {"user": self.uid, "password": self.changeData[varname]})
-                self.sqlConn.commit()
-                self.latest_response = varname + " has been changed"
+                                    {"user": self.uid, "password": self.changeData[0][varname]})
+                proc_column += str(varname) + " "
             else:
                 raise ColumnNotExist("Key doesn't correspond to known column")
-            #    print(e)
-            
-        #self.sqlConn.commit()
+        self.sqlConn.commit()
+        self.latest_response = varname + " has been changed"
     
+    #Accept csv value as input. The value then will be written to file
+    #inside faceSignature folder into it's separate unique file.
+    #file name will be recorded inside faceSignature table.
     def storeFaceSignature(self):
-        pass
+        faceSignatureArray = self.changeData
+        folder = "faceSignature/"
+        sqlCursor = self.sqlConn.cursor()
+        try:
+            os.mkdir(folder)
+        except:
+            print("Folder is created")
+        for signatureObject in faceSignatureArray:
+            filename = folder+str(uuid4())
+            with open(filename, 'w') as f:
+                value = signatureObject["value"]
+                f.write(value)
+                f.close()
+                sqlCursor.execute("""INSERT INTO MSTblFaceSignature(UIDOwner,FaceSignaturePath)
+                                     VALUES (:user,:password)""",
+                                    {"user": self.uid, "password": filename})
+        self.sqlConn.commit()
+        self.latest_response = "Insertion finish"
+        
+
 
 class UserNotFound(Exception):
     def __init__(self, *args: object) -> None:
