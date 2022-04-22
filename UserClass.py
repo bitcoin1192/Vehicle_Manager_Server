@@ -1,5 +1,7 @@
 from asyncio.windows_events import NULL
 from fileinput import filename
+from json import JSONEncoder
+import json
 from uuid import uuid4
 from ControllerException import UnknownIntent
 import sqlite3
@@ -64,12 +66,26 @@ class UserClass:
                 f.write(value)
                 f.close()
                 sqlCursor.execute("""INSERT INTO MSTblFaceSignature(UIDOwner,FaceSignaturePath)
-                                     VALUES (:user,:password)""",
-                                    {"user": self.uid, "password": filename})
+                                     VALUES (:user,:filepath)""",
+                                    {"user": self.uid, "filepath": filename})
         self.sqlConn.commit()
         self.latest_response = "Insertion finish"
-        
+    
+    def getFBAPresentation(self):
+        sqlCursor = self.sqlConn.cursor()
+        sqlCursor.execute("""SELECT username FROM MSTblUserLogin WHERE UID=:uid""",
+                                    {"uid": self.uid})
+        res_name = sqlCursor.fetchone()
+        sqlCursor.execute("""SELECT GID FROM GIDHeader WHERE UIDOwner=:uid""",
+                                    {"uid": self.uid})
+        res_gid = sqlCursor.fetchone()
+        totalres = json.dumps({self.uid: {"Nama": res_name[0], "OwnedGID": res_gid[0]}})
+        return {self.uid: {"Nama": res_name[0], "OwnedGID": res_gid[0]}}
 
+class VehicleNotFound(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+        self.error = "Query show 0 records"
 
 class UserNotFound(Exception):
     def __init__(self, *args: object) -> None:

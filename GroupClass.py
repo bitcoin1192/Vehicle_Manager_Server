@@ -8,11 +8,10 @@ class GroupClass:
         self.msg = msg
         self.sqlConn = conn
         self.curr = self.sqlConn.cursor()
-        sqlScript = self.curr.execute("""SELECT MSTblUserLogin.UID, GID FROM GIDHEADER 
-                                        INNER JOIN MSTblUserLogin on MSTblUserLogin.UID = GIDHeader.UIDOwner""")
+        sqlScript = self.curr.execute("""SELECT GID FROM GIDHEADER WHERE UIDOwner=:uid""",{"uid":uid})
         result = sqlScript.fetchone()
         self.uid = uid
-        self.groupID = result[1]
+        self.groupID = result[0]
 
     def intentReader(self):
         intent = self.msg["intent"]
@@ -43,3 +42,19 @@ class GroupClass:
                                  {"UIDMember":UIDMember,"GID":self.groupID})
         except sqlite3.OperationalError as e:
             raise UserNotFound("UIDMember is not found")
+
+    def getFBAPresentation(self):
+        try:
+            self.curr.execute("""SELECT DISTINCT TRGIDMember.VIDLease,
+                                 MSTblVehicleData.Type,MSTblVehicleData.TrainedNNPath 
+                                 FROM TRGIDMember INNER JOIN MSTblVehicleData ON TRGIDMember.VIDLease = MSTblVehicleData.VID 
+                                 WHERE GID=:GroupID""",
+                                {"GroupID": self.groupID})
+            res = self.curr.fetchall()
+            sumn = []
+            for record in res:
+                temp = {"VID": record[0],"Type":record[1],"TrainedNNPath":record[2]}
+                sumn.append(temp)
+            return {self.groupID: {"OwnedVID": sumn}}
+        except sqlite3.OperationalError as e:
+            raise UserNotFound("GIDMember didn't have vehicle")
