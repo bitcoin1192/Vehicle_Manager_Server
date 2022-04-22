@@ -7,3 +7,6 @@ cloudflareupdate.py
 cloudflare_update_record_config.yaml
 cloudflare_update_record_ip6.txt
 cloudflare_update_record.log
+*.db
+*.sql
+*.json
