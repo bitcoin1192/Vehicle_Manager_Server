@@ -4,6 +4,7 @@
 3. Create, Read, Update, Delete user dari kendaraan pada tabel JNTblFriendGroupData
 """
 import sqlite3
+from time import sleep
 import firebase_admin
 from firebase_admin import credentials, db as fba_db
 from flask import Flask, request, json, g, session
@@ -13,6 +14,7 @@ from LoginClass import LoginClass
 from UserClass import UserClass, UserExist, UserNotFound, ColumnNotExist
 from ControllerException import UnknownIntent
 from firebase_admin import credentials, db
+from VehicleClass import VehicleClass
 from cloudflareupdate import main as update, setup_parser
 
 args = setup_parser()
@@ -22,7 +24,7 @@ app = Flask(__name__)
 SESSION_PERMANENT = False
 SESSION_TYPE = 'filesystem'
 app.config.from_object(__name__)
-DATABASE = 'test.db'
+DATABASE = 'test-1.db'
 Session(app)
 cred = credentials.Certificate("latihanKey.json")
 firebase_admin.initialize_app(cred,{
@@ -47,13 +49,21 @@ def index():
 
 # Post API for CRU on vehicle entity
 # Current feature : addVehicle, transferVehicle
-@app.route('/vehicleOps',methods = ['POST'])
+@app.route('/vehicleOps',methods = ['GET'])
 def postMessageVehicle():
-    return 'Hello, World',200
+    test = session.get('uid',None)
+    if test is not None:
+        try:
+            vehicleObj = VehicleClass(get_db)
+            vehicleObj.storeVID(request.)
+        except (UserNotFound,UserExist,UnknownIntent) as e:
+            return json.dumps({"success": False, "errmsg": e.error}),403
+    else:
+        return json.dumps({"success": False, "errMsg": "Cookies is missing, try reauthenticating to loginOps endpoint"}),403
 
 # Post API for CRU on login entity
-# Current feature : signup, signin, edit
-# Requirement : 
+# Current feature : signup, signin, edit authenticated user data
+# Requirement : Username and password
 @app.route('/loginOps',methods = ['POST'])
 def postMessageLogin():
     try:
@@ -61,12 +71,13 @@ def postMessageLogin():
         loginObj.storeUserPass(request.get_json(force=True))
         if loginObj.intent.lower() == "login":
             loginObj.authUserPass()
-            userObj = UserClass(get_db(),loginObj.UID)
-            groupObj = GroupClass(get_db(),loginObj.UID,None)
             session['uid'] = loginObj.UID
-            updateFirebase(userObj,groupObj)
+            updateFirebase(loginObj)
+            sleep(1)
         elif loginObj.intent.lower() == "signup":
             loginObj.newUserCreation()
+            updateFirebase(loginObj)
+            sleep(1)
         else:
             raise UnknownIntent(loginObj.intent+" intent is not handle")
         return json.dumps({"success": True, "msg": loginObj.latest_response ,"uid": loginObj.UID})
@@ -110,7 +121,9 @@ def getPackedUserSummary():
     return 'Hello, World'
 
 
-def updateFirebase(userObj:UserClass, groupObj:GroupClass):
+def updateFirebase(loginObj:LoginClass):
+    userObj = UserClass(get_db(),loginObj.UID)
+    groupObj = GroupClass(get_db(),loginObj.UID,None)
     ref = fba_db.reference("Userdata")
     ref.update(userObj.getFBAPresentation())
     ref = fba_db.reference("GIDMember")
