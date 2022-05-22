@@ -26,13 +26,22 @@ class VehicleClass:
         #then return the authkey to application
         sqlCursor = self.sqlConn.cursor()
         sqlCursor.execute("SELECT UIDMember FROM TRGIDMember WHERE VIDLease=:vehicle",{"vehicle": self.VID})
-        result = sqlCursor.fetchone()
+        result = sqlCursor.fetchall()
         if result is None:
             raise UserNotFound
         else:
             self.UID = result[0]
             self.latest_response = "Can't find UIDMember for selected VIDLease"
         
+    def getOwner(self):
+        sqlCursor = self.sqlConn.cursor()
+        sqlCursor.execute("SELECT UIDMember FROM TRGIDMember WHERE VIDLease=:vehicle",{"vehicle": self.VID})
+        result = sqlCursor.fetchone()
+        if result is None:
+            raise UserNotFound
+        else:
+            self.UID = result[0]
+            self.latest_response = "Can't find UIDMember for selected VIDLease"
 
     def postRequestHandler(self):
         #insert to user MSTblUserLogin
