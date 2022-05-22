@@ -40,8 +40,8 @@ class LoginClass:
         sqlCursor = self.sqlConn.cursor()
         try:
             sqlCursor.execute("INSERT INTO MSTblUserLogin(username,password) VALUES (:user,:pass)",{"user": self.username, "pass": self.password})
-            UID = sqlCursor.lastrowid
-            sqlCursor.execute("INSERT INTO GIDHeader(UIDOwner) VALUES (:uid)",{"uid": UID})
+            self.UID = sqlCursor.lastrowid
+            sqlCursor.execute("INSERT INTO GIDHeader(UIDOwner) VALUES (:uid)",{"uid": self.UID})
             self.sqlConn.commit()
             self.latest_response = "Users has been created. Login to use authenticated endpoint"
         except sqlite3.IntegrityError as e:
