@@ -80,7 +80,7 @@ class UserClass:
                                     {"uid": self.uid})
         res_gid = sqlCursor.fetchone()
         totalres = json.dumps({self.uid: {"Nama": res_name[0], "OwnedGID": res_gid[0]}})
-        return {self.uid: {"Nama": res_name[0], "OwnedGID": res_gid[0]}}
+        return {"UID-"+str(self.uid): {"Nama": res_name[0], "OwnedGID": "GID-"+str(res_gid[0])}}
 
 class VehicleNotFound(Exception):
     def __init__(self, *args: object) -> None:
