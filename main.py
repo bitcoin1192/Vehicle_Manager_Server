@@ -9,13 +9,13 @@ import firebase_admin
 from firebase_admin import credentials, db as fba_db
 from flask import Flask, request, json, g, session
 from flask_session import Session
-from GroupClass import GroupClass
+from Vehicle import VehicleClass
 from LoginClass import LoginClass
 from UserClass import UserClass, UserExist, UserNotFound, ColumnNotExist
 from ControllerException import UnknownIntent
 from firebase_admin import credentials, db
-from VehicleClass import VehicleClass
 from cloudflareupdate import main as update, setup_parser
+from AppError import *
 
 args = setup_parser()
 update(6, 'AAAA', args)
@@ -24,17 +24,18 @@ app = Flask(__name__)
 SESSION_PERMANENT = False
 SESSION_TYPE = 'filesystem'
 app.config.from_object(__name__)
-DATABASE = 'test-1.db'
+DATABASE = 'test-5.db'
 Session(app)
 cred = credentials.Certificate("latihanKey.json")
-firebase_admin.initialize_app(cred,{
-    'databaseURL':'https://latihan-34c76-default-rtdb.asia-southeast1.firebasedatabase.app/'
-})
+#firebase_admin.initialize_app(cred,{
+#    'databaseURL':'https://latihan-34c76-default-rtdb.asia-southeast1.firebasedatabase.app/'
+#})
 
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
         db = g._database = sqlite3.connect(DATABASE)
+        db.execute("PRAGMA foreign_keys = 1")
     return db
 
 @app.teardown_appcontext
@@ -55,7 +56,7 @@ def postMessageVehicle():
     if test is not None:
         try:
             vehicleObj = VehicleClass(get_db)
-            vehicleObj.storeVID(request.)
+            #vehicleObj.storeVID(request.)
         except (UserNotFound,UserExist,UnknownIntent) as e:
             return json.dumps({"success": False, "errmsg": e.error}),403
     else:
@@ -72,12 +73,8 @@ def postMessageLogin():
         if loginObj.intent.lower() == "login":
             loginObj.authUserPass()
             session['uid'] = loginObj.UID
-            updateFirebase(loginObj)
-            sleep(1)
         elif loginObj.intent.lower() == "signup":
             loginObj.newUserCreation()
-            updateFirebase(loginObj)
-            sleep(1)
         else:
             raise UnknownIntent(loginObj.intent+" intent is not handle")
         return json.dumps({"success": True, "msg": loginObj.latest_response ,"uid": loginObj.UID})
@@ -105,10 +102,10 @@ def postMessageGroup():
     test = session.get('uid',None)
     if test is not None:
         try:
-            groupOwner = GroupClass(get_db(),session.get('uid'),request.get_json(force=True))
+            groupOwner = VehicleClass(get_db(),session.get('uid'),request.get_json(force=True))
             groupOwner.intentReader()
             return json.dumps({"success": True, "msg": groupOwner.latest_response})
-        except (UnknownIntent,UserNotFound) as e:
+        except (UnknownIntent,UserNotFound,sqlite3.Error) as e:
             return json.dumps({"success": False, "errMsg": e.error}),403
     else:
         return json.dumps({"success": False, "errMsg": "Cookies is missing, try reauthenticating to loginOps endpoint"}),403
@@ -121,10 +118,10 @@ def getPackedUserSummary():
     return 'Hello, World'
 
 
-def updateFirebase(loginObj:LoginClass):
+"""def updateFirebase(loginObj:LoginClass):
     userObj = UserClass(get_db(),loginObj.UID)
-    groupObj = GroupClass(get_db(),loginObj.UID,None)
+    groupObj = VehicleClass(get_db(),loginObj.UID,None)
     ref = fba_db.reference("Userdata")
     ref.update(userObj.getFBAPresentation())
     ref = fba_db.reference("GIDMember")
-    ref.update(groupObj.getFBAPresentation())
+    ref.update(groupObj.getFBAPresentation())"""

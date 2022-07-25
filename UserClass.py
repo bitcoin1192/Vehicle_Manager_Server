@@ -1,9 +1,8 @@
-from asyncio.windows_events import NULL
-from fileinput import filename
-from json import JSONEncoder
 import json
+from HelperFunction import convertSQLRowsToDict
 from uuid import uuid4
 from ControllerException import UnknownIntent
+from AppError import *
 import sqlite3
 import os
 
@@ -28,6 +27,8 @@ class UserClass:
                 self.editUserData()
             elif self.intent == "storeFace":
                 self.storeFaceSignature()
+            elif self.intent == "getKnownVehicle":
+                self.getKnownVehicle()
             else:
                 raise UnknownIntent(self.intent+" is not handle yet!")
         else:
@@ -65,44 +66,26 @@ class UserClass:
                 value = signatureObject["value"]
                 f.write(value)
                 f.close()
-                sqlCursor.execute("""INSERT INTO MSTblFaceSignature(UIDOwner,FaceSignaturePath)
+                sqlCursor.execute("""INSERT INTO MSTblFaceSignature(UID,FaceSignaturePath)
                                      VALUES (:user,:filepath)""",
                                     {"user": self.uid, "filepath": filename})
         self.sqlConn.commit()
         self.latest_response = "Insertion finish"
     
-    def getFBAPresentation(self):
+    def getKnownVehicle(self):
         sqlCursor = self.sqlConn.cursor()
-        sqlCursor.execute("""SELECT username FROM MSTblUserLogin WHERE UID=:uid""",
-                                    {"uid": self.uid})
-        res_name = sqlCursor.fetchone()
-        sqlCursor.execute("""SELECT GID FROM GIDHeader WHERE UIDOwner=:uid""",
-                                    {"uid": self.uid})
-        res_gid = sqlCursor.fetchone()
-        totalres = json.dumps({self.uid: {"Nama": res_name[0], "OwnedGID": res_gid[0]}})
-        return {"UID-"+str(self.uid): {"Nama": res_name[0], "OwnedGID": "GID-"+str(res_gid[0])}}
-
-class VehicleNotFound(Exception):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
-        self.error = "Query show 0 records"
-
-class UserNotFound(Exception):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
-        self.error = "Query show 0 records"
-
-class UserExist(Exception):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
-        self.error = "Username is not available"
-
-class InputIncomplete(Exception):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
-        self.error = "Input is missing from request data"
-
-class ColumnNotExist(Exception):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
-        self.error = args[0]
+        #Select owned vehicle by current user UID
+        sqlCursor.execute("""SELECT VID, UID, Type, Manufacturer, PoliceNum, AccKey
+                             FROM MSTblVehicle WHERE UID=:uid;""",
+                             {"uid": self.uid})
+        ret_list_own_vid = convertSQLRowsToDict(sqlCursor)
+        #Select borrowed vehicle in TRVehicleLease by current UID
+        sqlCursor.execute("""SELECT A.VID, B.Type, B.Manufacturer, B.PoliceNum, A.AccKey
+                             FROM TRVehicleLease as A 
+                             INNER JOIN MSTblVehicleData as B ON B.VID = A.VID
+                             JOIN MSTblUserLogin as C ON C.UID = B.UID
+                             WHERE A.UID!=:uid;""",
+                             {"uid": self.uid})
+        ret_list_borrowed_vid = convertSQLRowsToDict(sqlCursor)
+        self.latest_response = {"UID-"+str(self.uid): {"OwnedVehicle": ret_list_own_vid,"BorrowedVehicle": ret_list_borrowed_vid}}
+        return {"UID-"+str(self.uid): {"OwnedVehicle": ret_list_own_vid,"BorrowedVehicle": ret_list_borrowed_vid}}

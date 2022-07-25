@@ -8,8 +8,8 @@ class LoginClass:
         "type" : "byte",
         "properties" : {
             "intent" : {"type" : "string"},
-            "username" : {"type" : "string"},
-            "password" : {"type" : "string"}
+            "Username" : {"type" : "string"},
+            "Password" : {"type" : "string"}
         }
     }
     latest_response = None
@@ -17,31 +17,29 @@ class LoginClass:
     def __init__(self, conn: sqlite3.Connection):
         self.sqlConn = conn
     
-    def storeUserPass(self, input):
+    def storeUserPass(self, input:dict):
         self.intent = input["intent"]
-        self.username = input["username"]
-        self.password = input["password"]
+        self.Username = input["username"]
+        self.Password = input["password"]
 
     def authUserPass(self):
         #check on sql to retreive both uid and create new authkey
         #then return the authkey to application
         sqlCursor = self.sqlConn.cursor()
-        sqlCursor.execute("SELECT UID FROM MSTblUserLogin WHERE username=:user AND password=:pass",{"user": self.username, "pass": self.password})
+        sqlCursor.execute("SELECT UID FROM MSTblUserLogin WHERE Username=:user AND Password=:pass",{"user": self.Username, "pass": self.Password})
         result = sqlCursor.fetchone()
         if result is None:
             raise UserNotFound
         else:
             self.UID = result[0]
             self.latest_response = "User is found and authorize. Save this cookies for future authenticated request!"
-        
 
     def newUserCreation(self):
         #insert to user MSTblUserLogin
         sqlCursor = self.sqlConn.cursor()
         try:
-            sqlCursor.execute("INSERT INTO MSTblUserLogin(username,password) VALUES (:user,:pass)",{"user": self.username, "pass": self.password})
+            sqlCursor.execute("INSERT INTO MSTblUserLogin(Username,Password) VALUES (:user,:pass)",{"user": self.Username, "pass": self.Password})
             self.UID = sqlCursor.lastrowid
-            sqlCursor.execute("INSERT INTO GIDHeader(UIDOwner) VALUES (:uid)",{"uid": self.UID})
             self.sqlConn.commit()
             self.latest_response = "Users has been created. Login to use authenticated endpoint"
         except sqlite3.IntegrityError as e:
