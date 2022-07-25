@@ -1,7 +1,7 @@
 from typing import Dict
 import sqlite3
 import ControllerException
-from UserClass import UserNotFound, UserExist
+from AppError import *
 
 class VehicleClass:
     jsonSchema = {

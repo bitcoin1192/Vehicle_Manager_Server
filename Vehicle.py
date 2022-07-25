@@ -1,17 +1,15 @@
 import sqlite3
-from UserClass import UserNotFound
+from uuid import uuid4
 from ControllerException import UnknownIntent
+from AppError import *
 
-class GroupClass:
+class VehicleClass:
     latest_response = None
-    def __init__(self,conn: sqlite3.Connection, uid, msg) -> None:
+    def __init__(self, conn: sqlite3.Connection, uid, msg) -> None:
         self.msg = msg
         self.sqlConn = conn
         self.curr = self.sqlConn.cursor()
-        sqlScript = self.curr.execute("""SELECT GID FROM GIDHEADER WHERE UIDOwner=:uid""",{"uid":uid})
-        result = sqlScript.fetchone()
         self.uid = uid
-        self.groupID = result[0]
 
     def intentReader(self):
         intent = self.msg["intent"]
@@ -19,29 +17,29 @@ class GroupClass:
         for each in groupMember:
             if intent == "add":
                 self.addFriend(each["VID"],each["UID"])
-                self.latest_response = "Member is added to group"
             elif intent == "delete":
                 self.removeFriend(each["UID"])
-                self.latest_response = "Member is deleted from group"
             else:
                 raise UnknownIntent
         self.sqlConn.commit()
         
-    def addFriend(self, VID, UIDMember):
+    def addFriend(self, VID, UID):
         try:
-            self.curr.execute("""INSERT INTO TRGIDMember (GID,VIDLease,UIDMember)
-                                 values (:GID,:VID,:UIDMember)""",
-                                 {"GID": self.groupID,"VID":VID,"UIDMember":UIDMember})
+            self.curr.execute("""INSERT INTO TRVehicleLease (VID,UID,AccKey)
+                                 values (:VID,:UID,:KEY)""",
+                                 {"VID":VID,"UID":UID,"KEY":str(uuid4())})
+            self.latest_response = "Member is added to vehicle user list"
         except sqlite3.IntegrityError as e:
-            raise UserNotFound("UIDMember is not found")
+            raise ForeignKeyNotFound("Vehicle or User doesn't not exist")
             
-    def removeFriend(self, UIDMember):
+    def removeFriend(self, VID, UID):
         try:
-            self.curr.execute("""DELETE FROM TRGIDMember
-                                 WHERE UIDMember=:UIDMember and GID=:GID""",
-                                 {"UIDMember":UIDMember,"GID":self.groupID})
+            self.curr.execute("""DELETE FROM TRVehicleLease
+                                 WHERE UID=:UID and VID=:VID""",
+                                 {"UID":UID,"VID":VID})
+            self.latest_response = "Member is deleted from vehicle user list"
         except sqlite3.OperationalError as e:
-            raise UserNotFound("UIDMember is not found")
+            raise UserNotFound("User is not found")
 
     def getFBAPresentation(self):
         try:
@@ -58,6 +56,6 @@ class GroupClass:
             for record in res:
                 temp = {"VID": record[0],"Type":record[1],"TrainedNNPath":record[2],"PoliceNum":record[3],"Tahun":record[4],"Merk":record[5]}
                 sumn.append(temp)
-            return {"GID-"+str(self.groupID): {"OwnedVID": sumn}}
+            return {"-"+str(self.groupID): {"OwnedVID": sumn}}
         except sqlite3.OperationalError as e:
-            raise UserNotFound("GIDMember didn't have vehicle")
+            raise UserNotFound("Member didn't have vehicle")
