@@ -10,3 +10,4 @@ cloudflare_update_record.log
 *.db
 *.sql
 *.json
+*.sqbpro
