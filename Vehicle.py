@@ -19,10 +19,18 @@ class VehicleClass:
                 self.addFriend(each["VID"],each["UID"])
             elif intent == "delete":
                 self.removeFriend(each["UID"])
+            elif intent == "transfer":
+                self.transferOwnership(each["UID"])
             else:
                 raise UnknownIntent
         self.sqlConn.commit()
-        
+
+    def transferOwnership(self,toUID):
+        self.curr.execute("""UPDATE MSTblVehicleData
+                                 SET UID=:toUID
+                                 WHERE UID=:fromUID""",
+                                 {"toUID":toUID,"fromUID":self.uid})
+    
     def addFriend(self, VID, UID):
         try:
             self.curr.execute("""INSERT INTO TRVehicleLease (VID,UID,AccKey)
@@ -40,22 +48,3 @@ class VehicleClass:
             self.latest_response = "Member is deleted from vehicle user list"
         except sqlite3.OperationalError as e:
             raise UserNotFound("User is not found")
-
-    def getFBAPresentation(self):
-        try:
-            self.curr.execute("""SELECT VID,
-                                 MSTblVehicleData.Type,
-                                 MSTblVehicleData.TrainedNNPath,
-                                 MSTblVehicleData.PoliceNum,
-                                 MSTblVehicleData.TahunProduksi,
-                                 MSTblVehicleData.Manufacturer 
-                                 FROM MSTblVehicleData WHERE UIDOwner=:UID""",
-                                {"UID": self.uid})
-            res = self.curr.fetchall()
-            sumn = []
-            for record in res:
-                temp = {"VID": record[0],"Type":record[1],"TrainedNNPath":record[2],"PoliceNum":record[3],"Tahun":record[4],"Merk":record[5]}
-                sumn.append(temp)
-            return {"-"+str(self.groupID): {"OwnedVID": sumn}}
-        except sqlite3.OperationalError as e:
-            raise UserNotFound("Member didn't have vehicle")
