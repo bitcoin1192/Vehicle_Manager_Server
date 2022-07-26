@@ -80,7 +80,7 @@ class UserClass:
                              {"uid": self.uid})
         ret_list_own_vid = convertSQLRowsToDict(sqlCursor)
         #Select borrowed vehicle in TRVehicleLease by current UID
-        sqlCursor.execute("""SELECT A.VID, B.Type, B.Manufacturer, B.PoliceNum, A.AccKey
+        sqlCursor.execute("""SELECT A.VID, C.Username, B.Type, B.Manufacturer, B.PoliceNum, A.AccKey
                              FROM TRVehicleLease as A 
                              INNER JOIN MSTblVehicleData as B ON B.VID = A.VID
                              JOIN MSTblUserLogin as C ON C.UID = B.UID
