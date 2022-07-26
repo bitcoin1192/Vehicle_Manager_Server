@@ -20,16 +20,16 @@ class VehicleClass:
             elif intent == "delete":
                 self.removeFriend(each["UID"])
             elif intent == "transfer":
-                self.transferOwnership(each["UID"])
+                self.transferOwnership(each["UID"],each["VID"])
             else:
                 raise UnknownIntent
         self.sqlConn.commit()
 
-    def transferOwnership(self,toUID):
+    def transferOwnership(self,toUID,VID):
         self.curr.execute("""UPDATE MSTblVehicleData
                                  SET UID=:toUID
-                                 WHERE UID=:fromUID""",
-                                 {"toUID":toUID,"fromUID":self.uid})
+                                 WHERE UID=:fromUID AND VID=:VID""",
+                                 {"toUID":toUID, "fromUID":self.uid, "VID":VID})
     
     def addFriend(self, VID, UID):
         try:
