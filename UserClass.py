@@ -43,11 +43,11 @@ class UserClass:
                                     SET password=:password 
                                     WHERE UID=:user""",
                                     {"user": self.uid, "password": self.changeData[0][varname]})
-                proc_column += str(varname) + " "
+                proc_column += str(varname) + ", "
             else:
                 raise ColumnNotExist("Key doesn't correspond to known column")
         self.sqlConn.commit()
-        self.latest_response = varname + " has been changed"
+        self.latest_response = "Affected column is " + proc_column
     
     #Accept csv value as input. The value then will be written to file
     #inside faceSignature folder into it's separate unique file.
@@ -76,7 +76,7 @@ class UserClass:
         sqlCursor = self.sqlConn.cursor()
         #Select owned vehicle by current user UID
         sqlCursor.execute("""SELECT VID, UID, Type, Manufacturer, PoliceNum, AccKey
-                             FROM MSTblVehicle WHERE UID=:uid;""",
+                             FROM MSTblVehicleData WHERE UID=:uid;""",
                              {"uid": self.uid})
         ret_list_own_vid = convertSQLRowsToDict(sqlCursor)
         #Select borrowed vehicle in TRVehicleLease by current UID
