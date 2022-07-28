@@ -4,9 +4,7 @@
 3. Create, Read, Update, Delete user dari kendaraan pada tabel JNTblFriendGroupData
 """
 import sqlite3
-from time import sleep
-import firebase_admin
-from firebase_admin import credentials, db as fba_db
+
 from flask import Flask, request, json, g, session
 from flask_session import Session
 from Vehicle import VehicleClass
@@ -26,10 +24,6 @@ SESSION_TYPE = 'filesystem'
 app.config.from_object(__name__)
 DATABASE = 'test-5.db'
 Session(app)
-cred = credentials.Certificate("latihanKey.json")
-#firebase_admin.initialize_app(cred,{
-#    'databaseURL':'https://latihan-34c76-default-rtdb.asia-southeast1.firebasedatabase.app/'
-#})
 
 def get_db():
     db = getattr(g, '_database', None)
@@ -101,12 +95,3 @@ def postVehicle():
 @app.route('/packedUserSummary',methods = ['POST'])
 def getPackedUserSummary():
     return 'Hello, World'
-
-
-"""def updateFirebase(loginObj:LoginClass):
-    userObj = UserClass(get_db(),loginObj.UID)
-    groupObj = VehicleClass(get_db(),loginObj.UID,None)
-    ref = fba_db.reference("Userdata")
-    ref.update(userObj.getFBAPresentation())
-    ref = fba_db.reference("GIDMember")
-    ref.update(groupObj.getFBAPresentation())"""
