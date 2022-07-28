@@ -1,13 +1,14 @@
+from ast import arg
 import sqlite3
-class VehicleNotFound(Exception):
+class VehicleNotFound(sqlite3.IntegrityError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
-        self.error = "Query show 0 records"
+        self.error = args[0]
 
-class UserNotFound(Exception):
+class UserNotFound(sqlite3.IntegrityError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
-        self.error = "Query show 0 records"
+        self.error = args[0]
 
 class UserExist(Exception):
     def __init__(self, *args: object) -> None:
@@ -30,6 +31,11 @@ class ForeignKeyNotFound(sqlite3.IntegrityError):
         self.error = args[0]
 
 class ValueNotUnique(sqlite3.IntegrityError):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+        self.error = args[0]
+
+class ZeroRowAffected(sqlite3.OperationalError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
         self.error = args[0]
