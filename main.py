@@ -48,20 +48,6 @@ def close_connection(exception):
 def index():
     return 'Welcome to Sisalma-dev',200
 
-# Post API for CRU on vehicle entity
-# Current feature : addVehicle, transferVehicle
-@app.route('/vehicleOps',methods = ['GET'])
-def postMessageVehicle():
-    test = session.get('uid',None)
-    if test is not None:
-        try:
-            vehicleObj = VehicleClass(get_db)
-            #vehicleObj.storeVID(request.)
-        except (UserNotFound,UserExist,UnknownIntent) as e:
-            return json.dumps({"success": False, "errmsg": e.error}),403
-    else:
-        return json.dumps({"success": False, "errMsg": "Cookies is missing, try reauthenticating to loginOps endpoint"}),403
-
 # Post API for CRU on login entity
 # Current feature : signup, signin, edit authenticated user data
 # Requirement : Username and password
@@ -94,19 +80,18 @@ def postMessageUser():
     else:
         return json.dumps({"success": False, "errMsg": "Cookies is missing, try reauthenticating to loginOps endpoint"}),403
 
-# Post API for CRU on group entity
-# Current feature : add user to group, delete user from group
-# Requirement : UID and VID
-@app.route('/groupOps',methods = ['POST'])
-def postMessageGroup():
+# Post API for CRU on vehicle entity
+# Current feature : add and delete user, transfer ownership
+@app.route('/vehicleOps',methods = ['POST'])
+def postVehicle():
     test = session.get('uid',None)
     if test is not None:
         try:
-            groupOwner = VehicleClass(get_db(),session.get('uid'),request.get_json(force=True))
-            groupOwner.intentReader()
-            return json.dumps({"success": True, "msg": groupOwner.latest_response})
-        except (UnknownIntent,UserNotFound,sqlite3.Error) as e:
-            return json.dumps({"success": False, "errMsg": e.error}),403
+            vehicleObj = VehicleClass(get_db(),session.get('uid'),request.get_json(force=True))
+            vehicleObj.intentReader()
+            return json.dumps({"success": True, "msg": vehicleObj.latest_response})
+        except (UnknownIntent,sqlite3.Error) as e:
+            return json.dumps({"success": False, "errMsg": e.args[0]}),403
     else:
         return json.dumps({"success": False, "errMsg": "Cookies is missing, try reauthenticating to loginOps endpoint"}),403
 
