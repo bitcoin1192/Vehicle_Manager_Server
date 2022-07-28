@@ -18,11 +18,11 @@ class VehicleClass:
             if intent == "add":
                 self.addFriend(each["VID"],each["UID"])
             elif intent == "delete":
-                self.removeFriend(each["UID"])
+                self.removeFriend(each["VID"],each["UID"])
             elif intent == "transfer":
                 self.transferOwnership(each["UID"],each["VID"])
             else:
-                raise UnknownIntent
+                raise UnknownIntent("No handler for received intent \""+intent+"\" !")
         self.sqlConn.commit()
 
     def transferOwnership(self,toUID,VID):
@@ -30,21 +30,24 @@ class VehicleClass:
                                  SET UID=:toUID
                                  WHERE UID=:fromUID AND VID=:VID""",
                                  {"toUID":toUID, "fromUID":self.uid, "VID":VID})
+        if self.curr.rowcount < 1:
+            raise ZeroRowAffected("No record is updated for this request!")
+        else:
+            self.curr.execute("""DELETE FROM TRVehicleLease
+                                 WHERE VID=:VID""",
+                                 {"VID":VID})
+        self.latest_response = "Success updating ownership of vehicle and resetting vehicle members"
     
     def addFriend(self, VID, UID):
-        try:
-            self.curr.execute("""INSERT INTO TRVehicleLease (VID,UID,AccKey)
+        self.curr.execute("""INSERT INTO TRVehicleLease (VID,UID,AccKey)
                                  values (:VID,:UID,:KEY)""",
                                  {"VID":VID,"UID":UID,"KEY":str(uuid4())})
-            self.latest_response = "Member is added to vehicle user list"
-        except sqlite3.IntegrityError as e:
-            raise ForeignKeyNotFound("Vehicle or User doesn't not exist")
+        self.latest_response = "Member is added to vehicle user list"
             
     def removeFriend(self, VID, UID):
-        try:
-            self.curr.execute("""DELETE FROM TRVehicleLease
+        self.curr.execute("""DELETE FROM TRVehicleLease
                                  WHERE UID=:UID and VID=:VID""",
                                  {"UID":UID,"VID":VID})
-            self.latest_response = "Member is deleted from vehicle user list"
-        except sqlite3.OperationalError as e:
-            raise UserNotFound("User is not found")
+        self.latest_response = "Member is deleted from vehicle user list"
+        if self.curr.rowcount < 1:
+            raise ZeroRowAffected("No record is deleted for this request!")
