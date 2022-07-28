@@ -1,0 +1,38 @@
+import sqlite3
+
+def createTable(dbconn:sqlite3.Connection):
+    dbcursor = dbconn.cursor()
+    dbcursor.execute("""
+    CREATE TABLE IF NOT EXISTS "MSTblUserLogin" (
+	"UID"	INTEGER NOT NULL,
+	"Username"	TEXT NOT NULL UNIQUE,
+	"Password"	TEXT NOT NULL,
+	PRIMARY KEY("UID" AUTOINCREMENT)
+);
+CREATE TABLE IF NOT EXISTS "MSTblVehicleData" (
+	"VID"	INTEGER NOT NULL,
+	"UID"	INTEGER NOT NULL,
+	"Type"	TEXT NOT NULL,
+	"PoliceNum"	TEXT NOT NULL UNIQUE,
+	"TahunProduksi"	INTEGER NOT NULL,
+	"Manufacturer"	TEXT NOT NULL,
+	"AccKey"	TEXT NOT NULL UNIQUE,
+	FOREIGN KEY("UID") REFERENCES "MSTblUserLogin"("UID"),
+	PRIMARY KEY("VID" AUTOINCREMENT)
+);
+CREATE TABLE IF NOT EXISTS "TRVehicleLease" (
+	"AccKey"	TEXT NOT NULL,
+	"UID"	INTEGER NOT NULL,
+	"VID"	INTEGER NOT NULL,
+	PRIMARY KEY("UID","VID"),
+	FOREIGN KEY("VID") REFERENCES "MSTblVehicleData"("VID"),
+	FOREIGN KEY("UID") REFERENCES "MSTblUserLogin"("UID")
+);
+CREATE TABLE IF NOT EXISTS "MSTblFaceSignature" (
+	"FID"	INTEGER NOT NULL,
+	"UID"	INTEGER NOT NULL,
+	"FaceSignaturePath"	BLOB NOT NULL,
+	PRIMARY KEY("FID" AUTOINCREMENT),
+	FOREIGN KEY("UID") REFERENCES "MSTblUserLogin"("UID")
+);""")
+    dbconn.commit()
