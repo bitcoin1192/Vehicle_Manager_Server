@@ -14,6 +14,7 @@ from ControllerException import UnknownIntent
 from firebase_admin import credentials, db
 from cloudflareupdate import main as update, setup_parser
 from AppError import *
+from CreateTable import *
 
 args = setup_parser()
 update(6, 'AAAA', args)
@@ -22,14 +23,25 @@ app = Flask(__name__)
 SESSION_PERMANENT = False
 SESSION_TYPE = 'filesystem'
 app.config.from_object(__name__)
-DATABASE = 'test-5.db'
+DATABASE = 'dev.db'
 Session(app)
+dbcheck = False
 
 def get_db():
+    global dbcheck
     db = getattr(g, '_database', None)
     if db is None:
         db = g._database = sqlite3.connect(DATABASE)
         db.execute("PRAGMA foreign_keys = 1")
+        curr = db.cursor()
+        if dbcheck == False:
+            curr.execute("SELECT name FROM sqlite_master WHERE type='table';")
+            table_list = curr.fetchall()
+            if table_list.__len__() <= 1:
+                createTable(db)
+                fillTable(db)
+
+            dbcheck = True
     return db
 
 @app.teardown_appcontext
@@ -70,7 +82,7 @@ def postMessageUser():
             user.storeRequestData(request.get_json(force=True))
             return json.dumps({"success": True, "msg": user.latest_response})
         except (sqlite3.Error,ColumnNotExist) as emm:    
-            return json.dumps({"success": False, "errMsg": emm.args}),403    
+            return json.dumps({"success": False, "errMsg": emm.args[0]}),403    
     else:
         return json.dumps({"success": False, "errMsg": "Cookies is missing, try reauthenticating to loginOps endpoint"}),403
 
