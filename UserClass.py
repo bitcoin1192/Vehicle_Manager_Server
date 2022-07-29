@@ -75,17 +75,18 @@ class UserClass:
     def getKnownVehicle(self):
         sqlCursor = self.sqlConn.cursor()
         #Select owned vehicle by current user UID
-        sqlCursor.execute("""SELECT VID, UID, Type, Manufacturer, PoliceNum, AccKey
+        sqlCursor.execute("""SELECT VID, UID, Type, Manufacturer, Model, PoliceNum, AccKey
                              FROM MSTblVehicleData WHERE UID=:uid;""",
                              {"uid": self.uid})
         ret_list_own_vid = convertSQLRowsToDict(sqlCursor)
         #Select borrowed vehicle in TRVehicleLease by current UID
-        sqlCursor.execute("""SELECT A.VID, C.Username, B.Type, B.Manufacturer, B.PoliceNum, A.AccKey
+        sqlCursor.execute("""SELECT A.VID, C.Username, B.Type, B.Manufacturer, B.PoliceNum, B.Model, A.AccKey
                              FROM TRVehicleLease as A 
                              INNER JOIN MSTblVehicleData as B ON B.VID = A.VID
                              JOIN MSTblUserLogin as C ON C.UID = B.UID
                              WHERE A.UID!=:uid;""",
                              {"uid": self.uid})
         ret_list_borrowed_vid = convertSQLRowsToDict(sqlCursor)
-        self.latest_response = {"UID-"+str(self.uid): {"OwnedVehicle": ret_list_own_vid,"BorrowedVehicle": ret_list_borrowed_vid}}
-        return {"UID-"+str(self.uid): {"OwnedVehicle": ret_list_own_vid,"BorrowedVehicle": ret_list_borrowed_vid}}
+        if ret_list_borrowed_vid.__len__() < 1 and ret_list_own_vid.__len__() < 1:
+            raise ZeroRowAffected("No vehicle record found under your name.")
+        self.latest_response = {"OwnedVehicle": ret_list_own_vid,"BorrowedVehicle": ret_list_borrowed_vid}
