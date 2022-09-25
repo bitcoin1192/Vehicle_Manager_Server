@@ -11,7 +11,7 @@ from Vehicle import VehicleClass
 from LoginClass import LoginClass
 from UserClass import UserClass, UserExist, UserNotFound, ColumnNotExist
 from ControllerException import UnknownIntent
-from firebase_admin import credentials, db
+
 from cloudflareupdate import main as update, setup_parser
 from AppError import *
 from CreateTable import *
