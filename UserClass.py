@@ -29,6 +29,8 @@ class UserClass:
                 self.storeFaceSignature()
             elif self.intent == "getKnownVehicle":
                 self.getKnownVehicle()
+            elif self.intent == "searchUser":
+                self.searchUserGlobal()
             else:
                 raise UnknownIntent(self.intent+" is not handle yet!")
         else:
@@ -84,9 +86,19 @@ class UserClass:
                              FROM TRVehicleLease as A 
                              INNER JOIN MSTblVehicleData as B ON B.VID = A.VID
                              JOIN MSTblUserLogin as C ON C.UID = B.UID
-                             WHERE A.UID!=:uid;""",
+                             WHERE A.UID=:uid;""",
                              {"uid": self.uid})
         ret_list_borrowed_vid = convertSQLRowsToDict(sqlCursor)
         if ret_list_borrowed_vid.__len__() < 1 and ret_list_own_vid.__len__() < 1:
             raise ZeroRowAffected("No vehicle record found under your name.")
         self.latest_response = {"OwnedVehicle": ret_list_own_vid,"BorrowedVehicle": ret_list_borrowed_vid}
+    
+    def searchUserGlobal(self):
+        self.query = self.changeData[0]["query"]
+        sqlCursor = self.sqlConn.cursor()
+        #Select owned vehicle by current user UID
+        sqlCursor.execute("""SELECT UID,Username FROM MSTblUserLogin
+                             WHERE Username LIKE ?""",
+                             (self.query+"%",))
+        ret_list_user = convertSQLRowsToDict(sqlCursor)
+        self.latest_response = {"SearchUserResult":ret_list_user}

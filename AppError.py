@@ -39,3 +39,8 @@ class ZeroRowAffected(sqlite3.OperationalError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
         self.error = args[0]
+
+class PermissionError(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+        self.error = args[0]

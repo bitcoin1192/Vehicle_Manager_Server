@@ -29,7 +29,7 @@ class LoginClass:
         sqlCursor.execute("SELECT UID FROM MSTblUserLogin WHERE Username=:user AND Password=:pass",{"user": self.Username, "pass": self.Password})
         result = sqlCursor.fetchone()
         if result is None:
-            raise UserNotFound
+            raise UserNotFound("User or Password is not matching!")
         else:
             self.UID = result[0]
             self.latest_response = "User is found and authorize. Save this cookies for future authenticated request!"

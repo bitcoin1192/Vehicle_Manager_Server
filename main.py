@@ -71,7 +71,7 @@ def postMessageLogin():
             raise UnknownIntent(loginObj.intent+" intent is not handle")
         return json.dumps({"success": True, "msg": loginObj.latest_response ,"uid": loginObj.UID})
     except (UserNotFound,UserExist,UnknownIntent) as e:
-        return json.dumps({"success": False, "errmsg": e.error}),403
+        return json.dumps({"success": False, "errMsg": e.error}),403
 
 @app.route('/userOps',methods = ['POST'])
 def postMessageUser():
@@ -82,7 +82,7 @@ def postMessageUser():
             user.storeRequestData(request.get_json(force=True))
             return json.dumps({"success": True, "msg": user.latest_response})
         except (sqlite3.Error,ColumnNotExist) as emm:    
-            return json.dumps({"success": False, "errMsg": emm.args[0]}),403    
+            return json.dumps({"success": False, "errMsg": emm.args[0]})    
     else:
         return json.dumps({"success": False, "errMsg": "Cookies is missing, try reauthenticating to loginOps endpoint"}),403
 
@@ -96,7 +96,7 @@ def postVehicle():
             vehicleObj = VehicleClass(get_db(),session.get('uid'),request.get_json(force=True))
             vehicleObj.intentReader()
             return json.dumps({"success": True, "msg": vehicleObj.latest_response})
-        except (UnknownIntent,sqlite3.Error) as e:
+        except (UnknownIntent,sqlite3.Error,PermissionError) as e:
             return json.dumps({"success": False, "errMsg": e.args[0]}),403
     else:
         return json.dumps({"success": False, "errMsg": "Cookies is missing, try reauthenticating to loginOps endpoint"}),403
