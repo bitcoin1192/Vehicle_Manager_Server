@@ -17,7 +17,7 @@ from AppError import *
 from CreateTable import *
 
 args = setup_parser()
-#update(6, 'AAAA', args)
+update(6, 'AAAA', args)
 
 app = Flask(__name__)
 SESSION_PERMANENT = False
