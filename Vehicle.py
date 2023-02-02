@@ -25,6 +25,10 @@ class VehicleClass:
                 self.transferOwnership(each["UID"],each["VID"])
             elif intent == "member":
                 self.getVehicleMember(each["VID"],self.uid)
+            elif intent == "enable":
+                self.enableVehicle(each["VID"],self.uid)
+            elif intent == "disable":
+                self.disableVehicle(each["VID"],self.uid)
             else:
                 raise UnknownIntent("No handler for received intent \""+intent+"\" !")
         self.sqlConn.commit()
@@ -79,6 +83,18 @@ class VehicleClass:
         result = self.curr
         conversion = convertSQLRowsToDict(result)
         self.latest_response = {"VehicleMember":conversion}
+
+    def enableVehicle(self,VID):
+        if self.OwnerCheck(VID) or self.MemberCheck(VID):
+            self.latest_response = {"VehicleEnable": True}
+        else:
+            raise UserNotFound("You're not member of this Vehicle")
+    
+    def disableVehicle(self,VID):
+        if self.OwnerCheck(VID) or self.MemberCheck(VID):
+            self.latest_response = {"VehicleEnable": False}
+        else:
+            raise UserNotFound("You're not member of this Vehicle")
     
     def OwnerCheck(self,VID):
         self.curr.execute("""SELECT UID FROM MSTblVehicleData WHERE VID=:VID""",{"VID":VID})
@@ -87,3 +103,11 @@ class VehicleClass:
             return True
         else:
             return False
+
+    def MemberCheck(self,VID):
+        self.curr.execute("""SELECT UID FROM TRVehicleLease WHERE VID=:VID""",{"VID":VID})
+        VehicleUser = self.curr.fetchall()
+        for user in VehicleUser:
+            if user["UID"] == self.uid:
+                return True
+        return False

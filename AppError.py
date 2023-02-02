@@ -1,5 +1,11 @@
 from ast import arg
 import sqlite3
+
+class SIMNumberInvalid(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+        self.error = args[0]
+
 class VehicleNotFound(sqlite3.IntegrityError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
@@ -41,6 +47,11 @@ class ZeroRowAffected(sqlite3.OperationalError):
         self.error = args[0]
 
 class PermissionError(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+        self.error = args[0]
+
+class MACAddressesNotMatch(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
         self.error = args[0]

@@ -31,6 +31,8 @@ class UserClass:
                 self.getKnownVehicle()
             elif self.intent == "searchUser":
                 self.searchUserGlobal()
+            elif self.intent == "logout":
+                self.searchUserGlobal()
             else:
                 raise UnknownIntent(self.intent+" is not handle yet!")
         else:
@@ -77,12 +79,11 @@ class UserClass:
     def getKnownVehicle(self):
         sqlCursor = self.sqlConn.cursor()
         #Select owned vehicle by current user UID
-        sqlCursor.execute("""SELECT VID, UID, Type, Manufacturer, Model, PoliceNum, AccKey
-                             FROM MSTblVehicleData WHERE UID=:uid;""",
+        sqlCursor.execute("""SELECT * FROM MSTblVehicleData WHERE UID=:uid;""",
                              {"uid": self.uid})
         ret_list_own_vid = convertSQLRowsToDict(sqlCursor)
         #Select borrowed vehicle in TRVehicleLease by current UID
-        sqlCursor.execute("""SELECT A.VID, C.Username, B.Type, B.Manufacturer, B.PoliceNum, B.Model, A.AccKey
+        sqlCursor.execute("""SELECT A.VID, C.UID, B.Type, B.PoliceNum, B.BTMacAddress, A.AccKey
                              FROM TRVehicleLease as A 
                              INNER JOIN MSTblVehicleData as B ON B.VID = A.VID
                              JOIN MSTblUserLogin as C ON C.UID = B.UID
@@ -90,8 +91,9 @@ class UserClass:
                              {"uid": self.uid})
         ret_list_borrowed_vid = convertSQLRowsToDict(sqlCursor)
         if ret_list_borrowed_vid.__len__() < 1 and ret_list_own_vid.__len__() < 1:
-            raise ZeroRowAffected("No vehicle record found under your name.")
-        self.latest_response = {"OwnedVehicle": ret_list_own_vid,"BorrowedVehicle": ret_list_borrowed_vid}
+            self.latest_response = {"OwnedVehicle": [],"BorrowedVehicle": []}
+        else:
+            self.latest_response = {"OwnedVehicle": ret_list_own_vid,"BorrowedVehicle": ret_list_borrowed_vid}
     
     def searchUserGlobal(self):
         self.query = self.changeData[0]["query"]
@@ -99,6 +101,11 @@ class UserClass:
         #Select owned vehicle by current user UID
         sqlCursor.execute("""SELECT UID,Username FROM MSTblUserLogin
                              WHERE Username LIKE ?""",
-                             (self.query+"%",))
+                             (self.query,))
         ret_list_user = convertSQLRowsToDict(sqlCursor)
+        if ret_list_user.__len__() != 1:
+            raise UserNotFound("User is not found")
         self.latest_response = {"SearchUserResult":ret_list_user}
+    
+    def removeLoginRestriction(self):
+        pass
