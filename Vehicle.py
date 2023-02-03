@@ -26,9 +26,9 @@ class VehicleClass:
             elif intent == "member":
                 self.getVehicleMember(each["VID"],self.uid)
             elif intent == "enable":
-                self.enableVehicle(each["VID"],self.uid)
+                self.enableVehicle(each["VID"])
             elif intent == "disable":
-                self.disableVehicle(each["VID"],self.uid)
+                self.disableVehicle(each["VID"])
             else:
                 raise UnknownIntent("No handler for received intent \""+intent+"\" !")
         self.sqlConn.commit()
@@ -82,7 +82,7 @@ class VehicleClass:
                              WHERE A.VID=:VID and A.UID=:UID""",{"VID":VID, "UID":UIDRequester})
         result = self.curr
         conversion = convertSQLRowsToDict(result)
-        self.latest_response = {"VehicleMember":conversion}
+        self.latest_response = {"VehicleMember": conversion}
 
     def enableVehicle(self,VID):
         if self.OwnerCheck(VID) or self.MemberCheck(VID):
