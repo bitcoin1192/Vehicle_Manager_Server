@@ -33,6 +33,8 @@ class UserClass:
                 self.searchUserGlobal()
             elif self.intent == "logout":
                 self.searchUserGlobal()
+            elif self.intent == "addVehicle":
+                self.addVehicle()
             else:
                 raise UnknownIntent(self.intent+" is not handle yet!")
         else:
@@ -109,3 +111,20 @@ class UserClass:
     
     def removeLoginRestriction(self):
         pass
+    
+    def addVehicle(self):
+        self.query = self.changeData[0]["vehicle"]
+        vehicleMac = self.query["macaddress"]
+        vehicleName = self.query["name"]
+        vehicleOwner = self.uid
+        try:
+            sqlCursor = self.sqlConn.cursor()
+            sqlCursor.execute("""INSERT INTO MSTblVehicleData(UID,PoliceNum,BTMacAddress,Type,AccKey)
+                                        VALUES (:vehicleOwner,:vehiclename,:vehiclemac,:type,:acckey)""",{"vehicleOwner":vehicleOwner,"vehiclename":vehicleName,"vehiclemac":vehicleMac,"type":4,"acckey":"abc124"})
+            self.sqlConn.commit()
+            self.latest_response = "Vehicle is added"
+        except sqlite3.IntegrityError:
+            raise VehicleExist("Cannot add vehicle belonging to other user")
+            
+        
+        

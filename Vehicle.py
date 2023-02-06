@@ -86,23 +86,30 @@ class VehicleClass:
 
     def enableVehicle(self,VID):
         if self.OwnerCheck(VID) or self.MemberCheck(VID):
-            self.latest_response = {"VehicleEnable": True}
+            self.curr.execute("""SELECT BTMacAddress FROM MSTblVehicleData WHERE VID=:VID""",{"VID":VID})
+            result = self.curr.fetchone()
+            self.latest_response = {"VehicleEnable": True, "macaddress":result[0]}
         else:
             raise UserNotFound("You're not member of this Vehicle")
     
     def disableVehicle(self,VID):
         if self.OwnerCheck(VID) or self.MemberCheck(VID):
-            self.latest_response = {"VehicleEnable": False}
+            self.curr.execute("""SELECT BTMacAddress FROM MSTblVehicleData WHERE VID=:VID""",{"VID":VID})
+            result = self.curr.fetchone()
+            self.latest_response = {"VehicleEnable": False, "macaddress":result[0]}
         else:
             raise UserNotFound("You're not member of this Vehicle")
     
     def OwnerCheck(self,VID):
         self.curr.execute("""SELECT UID FROM MSTblVehicleData WHERE VID=:VID""",{"VID":VID})
-        VehicleOwner = self.curr.fetchone()[0]
-        if self.uid == VehicleOwner:
-            return True
+        VehicleOwner = self.curr.fetchone()
+        if VehicleOwner is not None:
+            if self.uid == VehicleOwner[0]:
+                return True
+            else:
+                return False
         else:
-            return False
+            raise VehicleNotFound("Vehicle doesn't exist !")
 
     def MemberCheck(self,VID):
         self.curr.execute("""SELECT UID FROM TRVehicleLease WHERE VID=:VID""",{"VID":VID})

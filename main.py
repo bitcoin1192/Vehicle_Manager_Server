@@ -17,13 +17,13 @@ from AppError import *
 from CreateTable import *
 
 args = setup_parser()
-update(6, 'AAAA', args)
+#update(6, 'AAAA', args)
 
 app = Flask(__name__)
 SESSION_PERMANENT = False
 SESSION_TYPE = 'filesystem'
 app.config.from_object(__name__)
-DATABASE = 'doav6.db'
+DATABASE = 'doav8.db'
 Session(app)
 dbcheck = False
 
@@ -51,7 +51,7 @@ def close_connection(exception):
 
 @app.route('/')
 def index():
-    #get_db()
+    get_db()
     resp = make_response("Welcome to Sisalma-Dev")
     resp.set_cookie(key="uid",value="test",expires=None,)
     return resp
@@ -77,7 +77,7 @@ def postMessageUser():
         try:
             user.storeRequestData(request.get_json(force=True))
             return json.dumps({"success": True, "msg": user.latest_response})
-        except (sqlite3.Error,ColumnNotExist,UserNotFound) as emm:    
+        except (sqlite3.Error,ColumnNotExist,UserNotFound,VehicleExist) as emm:    
             return json.dumps({"success": False, "errMsg": emm.args[0]}),403 
     else:
         return json.dumps({"success": False, "errMsg": "Cookies is missing, try reauthenticating to loginOps endpoint"}),403
@@ -92,7 +92,7 @@ def postVehicle():
             vehicleObj = VehicleClass(get_db(),session.get('uid'),request.get_json(force=True))
             vehicleObj.intentReader()
             return json.dumps({"success": True, "msg": vehicleObj.latest_response})
-        except (UnknownIntent,sqlite3.Error,PermissionError) as e:
+        except (UnknownIntent,sqlite3.Error,PermissionError, VehicleNotFound) as e:
             return json.dumps({"success": False, "errMsg": e.args[0]}),403
     else:
         return json.dumps({"success": False, "errMsg": "Cookies is missing, try reauthenticating to loginOps endpoint"}),403

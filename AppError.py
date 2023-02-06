@@ -6,6 +6,11 @@ class SIMNumberInvalid(Exception):
         super().__init__(*args)
         self.error = args[0]
 
+class VehicleExist(sqlite3.IntegrityError):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+        self.error = args[0]
+
 class VehicleNotFound(sqlite3.IntegrityError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
