@@ -23,6 +23,8 @@ class VehicleClass:
                 self.removeFriend(each["VID"],each["UID"])
             elif intent == "transfer":
                 self.transferOwnership(each["UID"],each["VID"])
+            elif intent == "data":
+                self.getVehicleData(each["VID"],self.uid)
             elif intent == "member":
                 self.getVehicleMember(each["VID"],self.uid)
             elif intent == "enable":
@@ -68,6 +70,14 @@ class VehicleClass:
                 raise ZeroRowAffected("No record is deleted for this request!")
         else:
             raise PermissionError("Requester UID is not VID Owner")
+
+    def getVehicleData(self,VID,UIDRequester):
+        if self.OwnerCheck(VID) or self.MemberCheck(VID):
+            self.curr.execute("""SELECT UID, VID, BTMacAddress FROM MSTblVehicleData WHERE VID=:VID""",{"VID":VID})
+            result = convertSQLRowsToDict(self.curr)
+            self.latest_response = {"VehicleData": result[0]}
+        else:
+            raise UserNotFound("You're not member of this Vehicle")
 
     def getVehicleMember(self,VID,UIDRequester):
         if self.RequesterIsOwner:
@@ -115,6 +125,6 @@ class VehicleClass:
         self.curr.execute("""SELECT UID FROM TRVehicleLease WHERE VID=:VID""",{"VID":VID})
         VehicleUser = self.curr.fetchall()
         for user in VehicleUser:
-            if user["UID"] == self.uid:
+            if user[0] == self.uid:
                 return True
         return False
