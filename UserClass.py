@@ -113,7 +113,7 @@ class UserClass:
         pass
     
     def addVehicle(self):
-        self.query = self.changeData[0]["vehicle"]
+        self.query = self.changeData[0]
         vehicleMac = self.query["macaddress"]
         vehicleName = self.query["name"]
         vehicleOwner = self.uid
@@ -122,7 +122,7 @@ class UserClass:
             sqlCursor.execute("""INSERT INTO MSTblVehicleData(UID,PoliceNum,BTMacAddress,Type,AccKey)
                                         VALUES (:vehicleOwner,:vehiclename,:vehiclemac,:type,:acckey)""",{"vehicleOwner":vehicleOwner,"vehiclename":vehicleName,"vehiclemac":vehicleMac,"type":4,"acckey":"abc124"})
             self.sqlConn.commit()
-            self.latest_response = "Vehicle is added"
+            self.latest_response = {"response": "Vehicle is added"}
         except sqlite3.IntegrityError:
             raise VehicleExist("Cannot add vehicle belonging to other user")
             
