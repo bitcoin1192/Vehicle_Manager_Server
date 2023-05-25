@@ -35,10 +35,15 @@ class UserClass:
                 self.searchUserGlobal()
             elif self.intent == "addVehicle":
                 self.addVehicle()
+            elif self.intent == "cookiesTest":
+                self.verifyCookies()
             else:
                 raise UnknownIntent(self.intent+" is not handle yet!")
         else:
             raise InputIncomplete
+    
+    def verifyCookies(self):
+        self.latest_response = {"response": "Cookies is valid !"}
     
     def editUserData(self):
         sqlCursor = self.sqlConn.cursor()
