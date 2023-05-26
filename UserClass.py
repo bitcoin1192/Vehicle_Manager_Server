@@ -16,6 +16,7 @@ class UserClass:
     }
     latest_response = None
     def __init__(self, conn: sqlite3.Connection, uid):
+        self.logout = False
         self.sqlConn = conn
         self.uid = uid
         
@@ -42,6 +43,10 @@ class UserClass:
         else:
             raise InputIncomplete
     
+    def logoutSession(self):
+        self.logout = True
+        self.latest_response = {"response": "Session is clear, have a nice day!"}
+
     def verifyCookies(self):
         self.latest_response = {"response": "Cookies is valid !"}
     

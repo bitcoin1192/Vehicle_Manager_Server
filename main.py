@@ -71,15 +71,18 @@ def postMessageLogin():
 
 @app.route('/userOps',methods = ['POST'])
 def postMessageUser():
-    test = session.get('uid',None)
-    if test is not None:
-        user = UserClass(get_db(),session.get('uid'))
+    uidFinder = session.get('uid',None)
+    if uidFinder is not None:
+        user = UserClass(get_db(),uidFinder)
         try:
             user.storeRequestData(request.get_json(force=True))
+            if user.logout == True:
+                session.clear()
             return json.dumps({"success": True, "msg": user.latest_response})
         except (sqlite3.Error,ColumnNotExist,UserNotFound,VehicleExist) as emm:    
             return json.dumps({"success": False, "errMsg": emm.args[0]}),403 
     else:
+        session.clear()
         return json.dumps({"success": False, "errMsg": "Cookies is missing, try reauthenticating to loginOps endpoint"}),403
 
 # Post API for CRU on vehicle entity
