@@ -33,7 +33,7 @@ class UserClass:
             elif self.intent == "searchUser":
                 self.searchUserGlobal()
             elif self.intent == "logout":
-                self.searchUserGlobal()
+                self.logoutSession()
             elif self.intent == "addVehicle":
                 self.addVehicle()
             elif self.intent == "cookiesTest":
