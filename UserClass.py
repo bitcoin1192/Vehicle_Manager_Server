@@ -26,8 +26,6 @@ class UserClass:
         if self.intent and self.changeData is not None:
             if self.intent == "edit":
                 self.editUserData()
-            elif self.intent == "storeFace":
-                self.storeFaceSignature()
             elif self.intent == "getKnownVehicle":
                 self.getKnownVehicle()
             elif self.intent == "searchUser":
@@ -64,29 +62,6 @@ class UserClass:
                 raise ColumnNotExist("Key doesn't correspond to known column")
         self.sqlConn.commit()
         self.latest_response = "Affected column is " + proc_column
-    
-    #Accept csv value as input. The value then will be written to file
-    #inside faceSignature folder into it's separate unique file.
-    #file name will be recorded inside faceSignature table.
-    def storeFaceSignature(self):
-        faceSignatureArray = self.changeData
-        folder = "faceSignature/"
-        sqlCursor = self.sqlConn.cursor()
-        try:
-            os.mkdir(folder)
-        except:
-            print("Folder is created")
-        for signatureObject in faceSignatureArray:
-            filename = folder+str(uuid4())
-            with open(filename, 'w') as f:
-                value = signatureObject["value"]
-                f.write(value)
-                f.close()
-                sqlCursor.execute("""INSERT INTO MSTblFaceSignature(UID,FaceSignaturePath)
-                                     VALUES (:user,:filepath)""",
-                                    {"user": self.uid, "filepath": filename})
-        self.sqlConn.commit()
-        self.latest_response = "Insertion finish"
     
     def getKnownVehicle(self):
         sqlCursor = self.sqlConn.cursor()
